@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Henry Runner Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      background: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="200"></canvas>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Load Henry image
+  const henryImg = new Image();
+  henryImg.src = "henry.png"; // TODO: Replace with actual Henry image path
+
+  // Henry character
+  const henry = {
+    x: 50,
+    y: 150,
+    width: 30,
+    height: 50,
+    yVelocity: 0,
+    jumping: false
+  };
+
+  // Obstacle list with random colors and shapes
+  const obstacleColors = ['red', 'green', 'purple', 'orange', 'black'];
+  const obstacleShapes = ['rectangle', 'circle'];
+
+  let obstacles = [createRandomObstacle()];
+
+  function createRandomObstacle() {
+    const width = Math.random() * 30 + 30;
+    const height = Math.random() * 50 + 50;
+    return {
+      x: canvas.width,
+      y: 200 - height,
+      width,
+      height,
+      speed: 7,
+      color: obstacleColors[Math.floor(Math.random() * obstacleColors.length)],
+      shape: obstacleShapes[Math.floor(Math.random() * obstacleShapes.length)]
+    };
+  }
+
+  let score = 0;
+  let gameOver = false;
+
+  function drawHenry() {
+    ctx.drawImage(henryImg, henry.x, henry.y, henry.width, henry.height);
+  }
+
+  function drawObstacle(ob) {
+    ctx.fillStyle = ob.color;
+    if (ob.shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(ob.x + ob.width / 2, ob.y + ob.height / 2, ob.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+    }
+  }
+
+  function drawScore() {
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText('Score: ' + score, 10, 30);
+  }
+
+  function update() {
+    if (gameOver) return;
+
+    // Gravity (medium)
+    if (henry.jumping) {
+      henry.yVelocity += 1.1;
+      henry.y += henry.yVelocity;
+
+      if (henry.y >= 150) {
+        henry.y = 150;
+        henry.jumping = false;
+        henry.yVelocity = 0;
+      }
+    }
+
+    for (let i = 0; i < obstacles.length; i++) {
+      let ob = obstacles[i];
+      ob.x -= ob.speed;
+
+      // Collision detection
+      if (
+        henry.x < ob.x + ob.width &&
+        henry.x + henry.width > ob.x &&
+        henry.y < ob.y + ob.height &&
+        henry.y + henry.height > ob.y
+      ) {
+        gameOver = true;
+        alert('Game Over! Your score: ' + score);
+      }
+
+      // Remove and replace off-screen obstacles
+      if (ob.x + ob.width < 0) {
+        obstacles.splice(i, 1);
+        obstacles.push(createRandomObstacle());
+        score++;
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawHenry();
+    obstacles.forEach(drawObstacle);
+    drawScore();
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    if (!gameOver) requestAnimationFrame(gameLoop);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' && !henry.jumping) {
+      henry.jumping = true;
+      henry.yVelocity = -20;
+    }
+  });
+
+  gameLoop();
+</script>
+<br><br><br><br>
+<a href="../projects.html">Back to projects</a>
+</body>
+</html>
